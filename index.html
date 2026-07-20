@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manini's Treasure Box</title>
+    <style>
+        :root {
+            --gold: #d4af37;
+            --purple: #2d1b4e;
+            --purple-dark: #0a0514;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+        body { margin: 0; background: var(--purple-dark); color: #fff; font-family: 'Georgia', serif; overflow-x: hidden; }
+        .center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+        
+        /* Auth Screen */
+        .auth { background: var(--glass); padding: 3rem; border-radius: 20px; border: 1px solid var(--gold); backdrop-filter: blur(10px); }
+        input { background: transparent; border: 1px solid var(--gold); color: white; padding: 15px; border-radius: 10px; width: 200px; text-align: center; font-size: 1.2rem; }
+        button { background: var(--gold); border: none; padding: 15px 30px; border-radius: 10px; margin-top: 15px; cursor: pointer; font-weight: bold; }
+        
+        /* Treasure Room */
+        .treasure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 40px; max-width: 1200px; margin: auto; }
+        .card { background: var(--glass); padding: 30px; border-radius: 20px; border: 1px solid var(--gold); cursor: pointer; transition: 0.4s; }
+        .card:hover { transform: translateY(-10px); background: rgba(255,255,255,0.15); }
+        
+        /* Letter Reader */
+        .reader { padding: 40px; max-width: 600px; margin: auto; line-height: 1.8; font-size: 1.2rem; }
+        .hidden { display: none !important; }
+        .back-btn { margin-top: 30px; background: none; border: 1px solid var(--gold); color: var(--gold); }
+    </style>
+</head>
+<body>
+
+<div id="app" class="center">
+    <!-- First Screen -->
+    <div id="screen1">
+        <h1>🎁 Manini's Treasure Box</h1>
+        <p>"I wasn't there for your first 29 birthdays... So I saved 30 little moments for your 30th Birthday."</p>
+        <div class="auth">
+            <input type="password" id="pass" placeholder="Password">
+            <br><button onclick="checkPass()">Open Treasure</button>
+            <p id="err" style="color: red;"></p>
+        </div>
+    </div>
+
+    <!-- Treasure Room -->
+    <div id="screen2" class="hidden">
+        <h1>The Treasure Room</h1>
+        <div class="treasure-grid" id="grid"></div>
+    </div>
+
+    <!-- Letter Reader -->
+    <div id="screen3" class="hidden" class="reader">
+        <h1 id="letter-title"></h1>
+        <div id="letter-body"></div>
+        <button class="back-btn" onclick="back()">Back to Treasures</button>
+    </div>
+</div>
+
+<script>
+    const treasures = [
+        {t: "Open When You're Happy", s: "When happiness finds you.", b: "Manan...\n\nAaj bahut khushi ho rahi hai tumhare liye. Tumhe khush dekh kar hi meri saari thakaan mit jati hai. Bas aise hi haste rehna.\n\n— Manini ❤️"},
+        {t: "Open When You're Sad", s: "When silence feels louder.", b: "Manan...\n\nKabhi kabhi mann bhari ho jata hai, main samajhti hoon. Bas yaad rakhna, main hamesha tumhare paas hoon. Ek lambi saans lo.\n\n— Manini ❤️"},
+        {t: "Open When You Feel Lonely", s: "For lonely evenings.", b: "Manan...\n\nAkelepan ka ehsaas bahut bura hota hai. Par tum akele nahi ho. Main tumhare har khayal mein hoon.\n\n— Manini ❤️"},
+        {t: "Open When You Miss Me", s: "When memories become conversations.", b: "Manan...\n\nMain bhi bahut yaad karti hoon. Humari baatein, humari hasi... jaldi milenge.\n\n— Manini ❤️"},
+        {t: "Open Before Sleeping", s: "For peaceful nights.", b: "Manan...\n\nDin bhar ki baatein bhool jao. Bas sukoon se so jao. Kal ek nayi shuruwat hai. Good night.\n\n— Manini ❤️"},
+        {t: "Open After Waking Up", s: "To begin beautifully.", b: "Manan...\n\nUtho, naya din hai. Tumhe bahut kuch karna hai aaj. Tumhare din ki shuruwat achi ho.\n\n— Manini ❤️"},
+        {t: "Open During Tea Time", s: "A slow little break.", b: "Manan...\n\nEk chai ka cup lo, aur thodi der ruk jao. Zindagi thodi dheere chalti hai toh achi lagti hai.\n\n— Manini ❤️"},
+        {t: "Open During Rain", s: "For rainy afternoons.", b: "Manan...\n\nBaarish ki awaaz suno. Kitna sukoon hai na? Bas wahi sukoon apne mann mein rakhna.\n\n— Manini ❤️"},
+        {t: "Open When Life Feels Beautiful", s: "Celebrate the little things.", b: "Manan...\n\nZindagi ki choti choti khushiyon ka shukrana karna chahiye. Aaj tumhara din hai.\n\n— Manini ❤️"},
+        {t: "Open When You Feel Weak", s: "When courage hides.", b: "Manan...\n\nKabhi kabhi kamzor hona theek hai. Par tumse zyada himmat kisi mein nahi hai. Tum sambhal loge.\n\n— Manini ❤️"},
+        {t: "Open When You Need Hope", s: "Hope is a quiet whisper.", b: "Manan...\n\nUmeed mat chhodna. Andhere ke baad roshni zaroor aati hai. Main hoon na.\n\n— Manini ❤️"},
+        {t: "Open After A Long Day", s: "Rest is earned.", b: "Manan...\n\nBahut kaam kar liya aaj. Ab bas aaram karo. Tumne bahut mehnat ki hai.\n\n— Manini ❤️"},
+        {t: "Open On A Quiet Night", s: "Listen to the silence.", b: "Manan...\n\nRaat ki khamoshi mein bahut kuch kehne ko hota hai. Suno use.\n\n— Manini ❤️"},
+        {t: "Open When Everything Goes Right", s: "Victory is sweet.", b: "Manan...\n\nTumne kar dikhaya! Mujhe tumpe hamesha se bharosa tha.\n\n— Manini ❤️"},
+        {t: "Open When Everything Goes Wrong", s: "Storms eventually pass.", b: "Manan...\n\nSab kuch kharab lag raha hai? Theek ho jayega. Bas thoda waqt do.\n\n— Manini ❤️"},
+        {t: "Open When You Smile", s: "Keep the sparkle.", b: "Manan...\n\nTumhari muskaan kitni khoobsurat hai. Aise hi haste rehna hamesha.\n\n— Manini ❤️"},
+        {t: "Open Before A Big Decision", s: "Trust your heart.", b: "Manan...\n\nDil ki suno. Tum jo bhi faisla karoge, sahi hi hoga.\n\n— Manini ❤️"},
+        {t: "Open When You're Lost", s: "Find your way back.", b: "Manan...\n\nRasta kabhi kabhi dhundla ho jata hai. Bas ruko, aur wapas dekho tum kahan se aaye ho.\n\n— Manini ❤️"},
+        {t: "Open When You're Overthinking", s: "Quiet the mind.", b: "Manan...\n\nItna mat socho. Bas chalo. Sab theek ho jayega.\n\n— Manini ❤️"},
+        {t: "Open After Work", s: "Switch off.", b: "Manan...\n\nKaam khatam! Ab tumhare apne liye waqt. Chill karo.\n\n— Manini ❤️"},
+        {t: "Open During A Walk", s: "Fresh perspective.", b: "Manan...\n\nChalo, thodi dur chalo. Paon zameen par honge toh mann halka hoga.\n\n— Manini ❤️"},
+        {t: "Open On Your Birthday", s: "The day you were born.", b: "Manan...\n\nHappy 30th Birthday! Yeh saal tumhara hai. Khoob khush raho.\n\n— Manini ❤️"},
+        {t: "Open While Looking At The Sky", s: "Dream big.", b: "Manan...\n\nAasman dekho. Kitna bada hai. Tumhare sapne bhi utne hi bade hone chahiye.\n\n— Manini ❤️"},
+        {t: "Open When You Need A Hug", s: "Sending you warmth.", b: "Manan...\n\nEk virtual hug le lo. Sabse pyaara wala. Main tumhare saath hoon.\n\n— Manini ❤️"},
+        {t: "Open When You Feel Broken", s: "Healing takes time.", b: "Manan...\n\nTootna buri baat nahi hai. Usi se toh naya kuch banta hai.\n\n— Manini ❤️"},
+        {t: "Open When You Feel Grateful", s: "Count your blessings.", b: "Manan...\n\nZindagi ne humein bahut kuch diya hai. Bas shukriya ada karte raho.\n\n— Manini ❤️"},
+        {t: "Open While Remembering Old Days", s: "Nostalgia is magic.", b: "Manan...\n\nPurane din kitne pyaare the, na? Par aaj ka din aur bhi pyara hai.\n\n— Manini ❤️"},
+        {t: "Open Whenever You Need Happiness", s: "Just for you.", b: "Manan...\n\nJab bhi mann na lage, bas ye box khol lena. Main yahin hoon.\n\n— Manini ❤️"},
+        {t: "Open Anytime", s: "Just a hello.", b: "Manan...\n\nBas tumhari yaad aayi. Socha kuch achha likh doon.\n\n— Manini ❤️"},
+        {t: "Open When You Need Manini", s: "I am always here.", b: "Manan...\n\nNo matter where life takes us, I am always here for you. Always.\n\n— Manini ❤️"}
+    ];
+
+    function checkPass() {
+        if(document.getElementById('pass').value === 'Amira') {
+            document.getElementById('screen1').classList.add('hidden');
+            document.getElementById('screen2').classList.remove('hidden');
+            initGrid();
+        } else {
+            document.getElementById('err').innerText = 'Wrong password, try again.';
+        }
+    }
+
+    function initGrid() {
+        const grid = document.getElementById('grid');
+        treasures.forEach((item, i) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<h3>🎁 ${item.t}</h3><p>${item.s}</p>`;
+            card.onclick = () => showLetter(i);
+            grid.appendChild(card);
+        });
+    }
+
+    function showLetter(i) {
+        document.getElementById('screen2').classList.add('hidden');
+        document.getElementById('screen3').classList.remove('hidden');
+        document.getElementById('letter-title').innerText = treasures[i].t;
+        document.getElementById('letter-body').innerText = treasures[i].b;
+    }
+
+    function back() {
+        document.getElementById('screen3').classList.add('hidden');
+        document.getElementById('screen2').classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
